@@ -1,0 +1,46 @@
+# load libraries
+library(ggplot2)
+library(pavo)
+library(gridExtra)
+
+setwd("~/R/R projects/PedigreeAnalyses/RawSpectralData")
+specs <- getspec(ext = "txt", lim = c(400, 700), subdir = TRUE, subdir.names = TRUE)
+setwd("~/R/R projects/PedigreeAnalyses")
+plot(specs)
+
+# if there are negative values:
+specs <- procspec(specs, fixneg = "zero")
+plot(specs)
+
+# what does the dataframe look like?
+str(specs)
+
+# add in some code to remove " (TEXt)"
+colnames(specs) <- gsub(colnames(specs), pattern = "\\s\\(.*\\)$", replacement = "")
+
+# need to change all "/" to "."
+colnames(specs) <- gsub(colnames(specs), pattern = "/", replacement = ".")
+str(specs)
+
+
+
+# subset the data into different points:
+# head first, points = a, b, and p
+head <- subset(specs, c(".a$|.b$|.p$"), names(specs))
+
+#drop any repeats
+drop <- grep(".1$", colnames(head), value = TRUE)
+head <- head[,!(colnames(head) %in% drop)]
+
+ind <- gsub('.a$|.b$|.p$', '', names(head))[-1]
+table(ind)
+
+# get the average of the head region
+ave.head <- aggspec(head, by = ind, FUN = mean)
+plot(ave.head)
+
+
+# get basic colourimetric data
+head.data <- summary(ave.head)
+
+# plot by population
