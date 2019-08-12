@@ -1,0 +1,373 @@
+---
+title: "PAVO Analysis"
+output: html_notebook
+author: Emily White
+---
+
+```{r}
+#install.packages("pavo")
+```
+
+```{r}
+library("pavo")
+```
+
+Step 1: Organization and Processing
+```{r}
+frog_dirs <- dir(file.path("C:/Users/emmid/Desktop/SpecData/"), recursive=TRUE, include.dirs=TRUE, pattern= "(^\\d*$)|(^..\\d$)")
+
+spec_dirs<- file.path("C:/Users/emmid/Desktop/SpecData", frog_dirs)
+
+frog_IDs <- read.table(file.path("C:/Users/emmid/Desktop/SpecData/Frog_IDs.txt"), header = TRUE, stringsAsFactors=FALSE)
+
+spec_dirs_IDs <- dplyr::mutate(frog_IDs, path = spec_dirs)
+spec_dirs_IDs
+```
+
+```{r}
+spec_analysis <- function(row) 
+{
+  specs <- getspec(where=spec_dirs_IDs[row,2], ext='txt', lim=c(346,1041), subdir=TRUE, subdir.names=TRUE)
+  explorespec(specs, by=1, ylim=range(0,40))
+
+  #average by groups of 3 spectral curves 
+  specs_agg <- aggspec(specs, by=3, FUN="mean")
+  explorespec(specs_agg, by=1, ylim= range(0,40))
+
+  #remove electrical noise using #Gaussian smoothing 
+  specs_agg_smooth <- procspec(specs_agg, opt="smooth", span=0.15)
+  explorespec(specs_agg_smooth, by=1, ylim= range(0,40))
+  
+  summary(specs_agg_smooth)
+}
+```
+
+```{r}
+spec_dirs_IDs[1,1]
+spec_analysis(1)
+```
+
+
+```{r}
+do <- function(y) 
+{print(spec_dirs_IDs[y,1])
+  spec_analysis(y)}
+
+#for (y in c(1:62)) do(y)
+```
+
+
+```{r}
+do(1)
+```
+
+```{r}
+do(2)
+```
+
+```{r}
+do(3)
+```
+
+```{r}
+do(4)
+```
+
+```{r}
+do(5)
+```
+
+6 has 10 spectra files
+```{r}
+#do(6)
+```
+
+```{r}
+do(7)
+```
+
+```{r}
+do(8)
+```
+
+```{r}
+do(9)
+```
+
+```{r}
+do(10)
+```
+
+```{r}
+do(11)
+```
+
+```{r}
+do(12)
+```
+
+```{r}
+do(13)
+```
+
+```{r}
+do(14)
+```
+
+```{r}
+do(15)
+```
+
+```{r}
+do(16)
+```
+
+```{r}
+do(17)
+```
+
+```{r}
+#do(18)
+```
+
+```{r}
+do(19)
+```
+
+```{r}
+do(20)
+```
+
+```{r}
+do(21)
+```
+
+```{r}
+do(22)
+```
+
+```{r}
+do(23)
+```
+
+```{r}
+do(24)
+```
+
+```{r}
+do(25)
+```
+
+```{r}
+do(26)
+```
+
+```{r}
+do(27)
+```
+
+```{r}
+do(28)
+```
+
+```{r}
+do(29)
+```
+
+```{r}
+do(30)
+```
+
+```{r}
+do(31)
+```
+
+```{r}
+do(32)
+```
+
+```{r}
+do(33)
+```
+
+```{r}
+do(34)
+```
+
+```{r}
+do(35)
+```
+
+```{r}
+do(36)
+```
+
+```{r}
+do(37)
+```
+
+```{r}
+do(38)
+```
+
+```{r}
+do(39)
+```
+
+```{r}
+do(40)
+```
+
+41 only had 10 spectra files
+```{r}
+#do(41)
+```
+
+42 only had 8 spectra files
+```{r}
+#do(42)
+```
+
+```{r}
+#do(43)
+```
+
+```{r}
+#do(44)
+```
+
+```{r}
+#do(45)
+```
+
+```{r}
+#do(46)
+```
+
+```{r}
+#do(47)
+```
+
+```{r}
+#do(48)
+```
+
+```{r}
+#do(49)
+```
+
+```{r}
+#do(50)
+```
+
+```{r}
+#do(51)
+```
+
+```{r}
+#do(52)
+```
+
+```{r}
+#do(53)
+```
+
+```{r}
+#do(54)
+```
+
+```{r}
+#do(55)
+```
+
+```{r}
+#do(56)
+```
+
+```{r}
+#do(57)
+```
+
+```{r}
+#do(58)
+```
+
+```{r}
+do(59)
+```
+
+```{r}
+do(60)
+```
+
+```{r}
+do(61)
+```
+
+```{r}
+do(62)
+```
+
+
+
+
+
+Use explorespec and plotsmooth to plot spectral curves
+  -explorespec is used to plot one or multiple spectral curves on the same graph to rapidly compare groups of
+  spectra
+  -plotsmooth is used to plot spectral curves with various levels of loess smoothing to help decide which
+  loess parameters are best for subsequently smoothing the data
+
+
+Use aggspec and procspec to process data for visualization
+  -aggspec is used when you've taken multiple measurements from the same sample. aggspec is a function that
+  averages the multiple measurements to reduce sampling error
+      -by argument indicates the size (x) of the group of x consecutive columns you want to average
+      -FUN argument indicates the function to be applied to the groups of spectra (default="mean")
+  -procspec is a function that uses normalization and/or smoothing and transformations to standardize and
+  clean spectral data. This is useful for noise reduction
+      -opt="smooth" indicates gaussian smoothing
+      -there are other options that may apply
+
+Step 2: Visualization
+
+```{r}
+#subset wavelength column and the #12 spectra from the belly patch 
+#specs.belly <- subset(specs, "Belly") 
+
+#extract first 4 characters from column names #(species labels) 
+#spp <- substr(names(specs.belly), 1, 4) 
+
+#average and plot spectral data by species 
+#aggplot(specs.belly, by=spp)
+
+```
+
+B1- total brightness (sum of relative reflectance over entire spectral range)
+B2- mean relative reflectance over entire spectral range
+B3- intensity (reflectance at wavelength of maximum reflectance)
+S1U- Contribution of UV to total brightness
+S1V- Contribution of violet
+S1B- Contribution of Blue
+S1G- Contribution of Green
+S1Y- Contribution of Yellow
+S1R- Contribution of Red
+S2- Spectral saturation (Rmax/Rmin)
+S3- Reflectance over the Rmax divided by B1
+S4- Spectral purity
+S5- 
+S6- contrast (Rmax-Rmin)
+S7- Spectral saturation
+S8- (Rmax-Rmin)/B2
+S9- Carotenoid chroma- only used when color is due to carotenoids
+S10- (Rmax-Rmin)/B2 x |bmaxneg|
+H1- peak wavelength/hue (wavelength of maximum reflectance)
+H2- Hue- Wavelength at bmaxneg
+H3- Hue- wavelength at Rmid
+H4- Hue-
+H5- Hue- wavelength at bmax
+
+
+
+
+
