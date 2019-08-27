@@ -14,6 +14,8 @@ library("pavo")
 
 Step 1: Organization and Processing
 ```{r}
+#create a data frame that includes frog IDs and path to directory with spec data
+
 frog_dirs <- dir(file.path("C:/Users/emmid/Desktop/SpecData/"), recursive=TRUE, include.dirs=TRUE, pattern= "(^\\d*$)|(^..\\d$)")
 
 spec_dirs<- file.path("C:/Users/emmid/Desktop/SpecData", frog_dirs)
@@ -25,30 +27,56 @@ spec_dirs_IDs
 ```
 
 ```{r}
+#create a function to analyze spec data for each frog
+
 spec_analysis <- function(row) 
 {
+  #import/visualize spectral data
   specs <- getspec(where=spec_dirs_IDs[row,2], ext='txt', lim=c(346,1041), subdir=TRUE, subdir.names=TRUE)
   explorespec(specs, by=1, ylim=range(0,40))
-
-  #average by groups of 3 spectral curves 
-  specs_agg <- aggspec(specs, by=3, FUN="mean")
-  explorespec(specs_agg, by=1, ylim= range(0,40))
-
-  #remove electrical noise using #Gaussian smoothing 
-  specs_agg_smooth <- procspec(specs_agg, opt="smooth", span=0.15)
-  explorespec(specs_agg_smooth, by=1, ylim= range(0,40))
   
-  summary(specs_agg_smooth)
+  #subset spec data for body region
+  #combine spec data within region and take the average
+  #apply LOESS smoothing, make neg values 0
+  #plot spectral curve
+  
+  specs_dorsum <- subset(specs, subset= c("a", "b", "c", "d", "e", "f", "p", "q"))
+  dorsum_agg <- aggspec(specs_dorsum, by=8, FUN="mean")
+  dorsum_agg_smooth <- procspec(dorsum_agg, opt="smooth", fixneg="zero", span=0.15)
+  explorespec(dorsum_agg_smooth, by=1, ylim=range(0,40))
+  
+  specs_hindlegs <- subset(specs, subset= c("g","h"))
+  hindlegs_agg <- aggspec(specs_hindlegs, by=2, FUN="mean")
+  hindlegs_agg_smooth <- procspec(hindlegs_agg, opt="smooth", fixneg="zero", span=0.15)
+  explorespec(hindlegs_agg_smooth, by=1, ylim=range(0,40))
+  
+  specs_forelimbs <- subset(specs, subset= c("n", "o"))
+  forelimbs_agg <- aggspec(specs_forelimbs, by=2, FUN="mean")
+  forelimbs_agg_smooth <- procspec(forelimbs_agg, opt="smooth", fixneg="zero", span=0.15)
+  explorespec(forelimbs_agg_smooth, by=1, ylim=range(0,40))
+  
+  #calculate colorimetric variables for each region (Montgomerie 2006)
+    dorsum_summary <- summary(dorsum_agg_smooth)
+    hindlegs_summary <- summary(hindlegs_agg_smooth)
+    forelimbs_summary <- summary(forelimbs_agg_smooth)
+  
+  #combine summary variables for each region into one data frame
+    summary_frog <- rbind(dorsum_summary, hindlegs_summary, forelimbs_summary)
+    summary_frog
 }
 ```
 
 ```{r}
+#print frog ID
 spec_dirs_IDs[1,1]
+#run spec analysis
 spec_analysis(1)
 ```
 
 
 ```{r}
+#function that prints frog ID and runs spec analysis for a specified individual
+
 do <- function(y) 
 {print(spec_dirs_IDs[y,1])
   spec_analysis(y)}
@@ -215,7 +243,7 @@ do(39)
 ```
 
 ```{r}
-do(40)
+#do(40)
 ```
 
 41 only had 10 spectra files
@@ -307,67 +335,4 @@ do(61)
 ```{r}
 do(62)
 ```
-
-
-
-
-
-Use explorespec and plotsmooth to plot spectral curves
-  -explorespec is used to plot one or multiple spectral curves on the same graph to rapidly compare groups of
-  spectra
-  -plotsmooth is used to plot spectral curves with various levels of loess smoothing to help decide which
-  loess parameters are best for subsequently smoothing the data
-
-
-Use aggspec and procspec to process data for visualization
-  -aggspec is used when you've taken multiple measurements from the same sample. aggspec is a function that
-  averages the multiple measurements to reduce sampling error
-      -by argument indicates the size (x) of the group of x consecutive columns you want to average
-      -FUN argument indicates the function to be applied to the groups of spectra (default="mean")
-  -procspec is a function that uses normalization and/or smoothing and transformations to standardize and
-  clean spectral data. This is useful for noise reduction
-      -opt="smooth" indicates gaussian smoothing
-      -there are other options that may apply
-
-Step 2: Visualization
-
-```{r}
-#subset wavelength column and the #12 spectra from the belly patch 
-#specs.belly <- subset(specs, "Belly") 
-
-#extract first 4 characters from column names #(species labels) 
-#spp <- substr(names(specs.belly), 1, 4) 
-
-#average and plot spectral data by species 
-#aggplot(specs.belly, by=spp)
-
-```
-
-B1- total brightness (sum of relative reflectance over entire spectral range)
-B2- mean relative reflectance over entire spectral range
-B3- intensity (reflectance at wavelength of maximum reflectance)
-S1U- Contribution of UV to total brightness
-S1V- Contribution of violet
-S1B- Contribution of Blue
-S1G- Contribution of Green
-S1Y- Contribution of Yellow
-S1R- Contribution of Red
-S2- Spectral saturation (Rmax/Rmin)
-S3- Reflectance over the Rmax divided by B1
-S4- Spectral purity
-S5- 
-S6- contrast (Rmax-Rmin)
-S7- Spectral saturation
-S8- (Rmax-Rmin)/B2
-S9- Carotenoid chroma- only used when color is due to carotenoids
-S10- (Rmax-Rmin)/B2 x |bmaxneg|
-H1- peak wavelength/hue (wavelength of maximum reflectance)
-H2- Hue- Wavelength at bmaxneg
-H3- Hue- wavelength at Rmid
-H4- Hue-
-H5- Hue- wavelength at bmax
-
-
-
-
 
