@@ -62,7 +62,7 @@ spec_analysis <- function(row)
   
   #combine summary variables for each region into one data frame
     summary_frog <- rbind(dorsum_summary, hindlegs_summary, forelimbs_summary)
-    summary_frog
+    return(summary_frog)
 }
 ```
 
