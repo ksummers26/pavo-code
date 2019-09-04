@@ -72,7 +72,7 @@ spec_analysis <- function(row)
 
 ```{r}
 #function that prints frog ID and runs spec analysis for a specified individual
-#need more spec files for individuals 6, 18, 40-58)
+#need more spec files for individuals 6, 18, 40-58
 
 color_vars_total <- data.frame()
 
