@@ -13,6 +13,7 @@ library("pavo")
 ```
 
 Step 1: Organization and Processing
+
 ```{r}
 #create a data frame that includes frog IDs and path to directory with spec data
 
@@ -26,61 +27,94 @@ spec_dirs_IDs <- dplyr::mutate(frog_IDs, path = spec_dirs)
 spec_dirs_IDs
 ```
 
+
 ```{r}
 #create a function to analyze spec data for each frog
+    dorsum_summary_total <- data.frame()
+    hindlimb_summary_total <- data.frame()
+    forelimb_summary_total <- data.frame()
 
-spec_analysis <- function(row) 
+
+for (y in c(1:77)) 
 {
-  #import/visualize spectral data
-  specs <- getspec(where=spec_dirs_IDs[row,2], ext='txt', lim=c(400,1041), subdir=TRUE, subdir.names=TRUE)
-  #explorespec(specs, by=1, ylim=range(0,40))
-  
+  specs <- getspec(where=spec_dirs_IDs[y,2], ext='txt', lim=c(400,1041), subdir=TRUE, subdir.names=TRUE)
+  frog_ID <- spec_dirs_IDs[y,1]
   #subset spec data for body region
   #combine spec data within region and take the average
   #apply LOESS smoothing, make neg values 0
   #plot spectral curve
   
-  specs_dorsum <- subset(specs, subset= c("a", "b", "c", "d", "e", "f", "p", "q"))
-  dorsum_agg <- aggspec(specs_dorsum, by=8, FUN="mean")
+  specs_dorsum <- na.omit(subset(specs, subset=c("a", "b", "c", "d", "e", "f", "p", "q")))
+  count_dorsum <- (ncol(specs_dorsum)-1)
+  dorsum_agg <- aggspec(specs_dorsum, by=count_dorsum, FUN="mean")
   dorsum_agg_smooth <- procspec(dorsum_agg, opt="smooth", fixneg="zero", span=0.15)
-  #explorespec(dorsum_agg_smooth, by=1, ylim=range(0,40))
+  dorsum_summary <- summary(dorsum_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+  dorsum_summary$Individual_ID <- frog_ID
+  dorsum_summary_total <- rbind(dorsum_summary_total, dorsum_summary)
   
-  specs_hindlegs <- subset(specs, subset= c("g","h"))
-  hindlegs_agg <- aggspec(specs_hindlegs, by=2, FUN="mean")
-  hindlegs_agg_smooth <- procspec(hindlegs_agg, opt="smooth", fixneg="zero", span=0.15)
-  #explorespec(hindlegs_agg_smooth, by=1, ylim=range(0,40))
+  specs_hindlimb <- na.omit(subset(specs, subset=c("g","h")))
+  count_hindlimb <- (ncol(specs_hindlimb)-1)
+  if (count_hindlimb == 2) 
+  {
+    specs_hindlimb <- aggspec(specs_hindlimb, by=2, FUN="mean")
+  }
+  if (count_hindlimb == 2 || count_hindlimb == 1)
+  {
+    hindlimb_agg_smooth <- procspec(specs_hindlimb, opt="smooth", fixneg="zero", span=0.15)
+    hindlimb_summary <- summary(hindlimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+    hindlimb_summary$Individual_ID <- frog_ID
+    hindlimb_summary_total <- rbind(hindlimb_summary_total, hindlimb_summary)
+  }
   
-  specs_forelimbs <- subset(specs, subset= c("n", "o"))
-  forelimbs_agg <- aggspec(specs_forelimbs, by=2, FUN="mean")
-  forelimbs_agg_smooth <- procspec(forelimbs_agg, opt="smooth", fixneg="zero", span=0.15)
-  #explorespec(forelimbs_agg_smooth, by=1, ylim=range(0,40))
-  
-  #calculate colorimetric variables for each region (Montgomerie 2006)
-  #B2= mean relative reflectance over entire spectral range
-  #S1Y= relative contribution of yellow spectral range to total brightness
-  #S1R= relative contribution of red spectral range to total brightness
-  #H1= wavelength at maximum reflectance
-    dorsum_summary <- summary(dorsum_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
-    hindlegs_summary <- summary(hindlegs_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
-    forelimbs_summary <- summary(forelimbs_agg_smooth, subset = c("B2", "S1Y", "S1R","H1"))
-  
-  #combine summary variables for each region into one data frame
-    summary_frog <- rbind(dorsum_summary, hindlegs_summary, forelimbs_summary)
-    return(summary_frog)
+  specs_forelimb <- na.omit(subset(specs, subset=c("n", "o")))
+  count_forelimb <- (ncol(specs_forelimb)-1)
+  if (count_forelimb == 2) 
+  {
+    specs_forelimb <- aggspec(specs_forelimb, by=2, FUN="mean")
+  }
+  if (count_forelimb == 2 || count_forelimb == 1)
+  {
+    forelimb_agg_smooth <- procspec(specs_forelimb, opt="smooth", fixneg="zero", span=0.15)
+    forelimb_summary <- summary(forelimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+    forelimb_summary$Individual_ID <- frog_ID
+    forelimb_summary_total <- rbind(forelimb_summary_total, forelimb_summary)
+  }
 }
 ```
 
 ```{r}
-#function that prints frog ID and runs spec analysis for a specified individual
-#need more spec files for individuals 6, 18, 40-58
-
-color_vars_total <- data.frame()
-
-for (y in c(1:5, 7:17, 19:39, 59:62)) 
-  {frog_ID <- spec_dirs_IDs[y,1]
-  color_vars <- spec_analysis(y)
-  color_vars$frog_ID <- frog_ID
-  color_vars_total <- rbind(color_vars_total, color_vars)}
-
-color_vars_total
+    dorsum_summary_total
+    hindlimb_summary_total
+    forelimb_summary_total
 ```
+
+
+```{r}
+write.table(dorsum_summary_total, file="C:/Users/emmid/Desktop/Spec_Results/dorsum.txt", sep="\t")
+write.table(hindlimb_summary_total, file="C:/Users/emmid/Desktop/Spec_Results/hindlimb.txt", sep="\t")
+write.table(forelimb_summary_total, file="C:/Users/emmid/Desktop/Spec_Results/forelimb.txt", sep="\t")
+```
+
+
+```{r}
+pedigree_info <- read.csv("C:/Users/emmid/Desktop/Research/pedigree_info.csv")
+pedigree_info
+```
+
+```{r}
+ped_dorsum <- merge(pedigree_info, dorsum_summary_total)
+ped_dorsum
+
+ped_forelimb <- merge(pedigree_info, forelimb_summary_total)
+ped_forelimb
+
+ped_hindlimb <- merge(pedigree_info, hindlimb_summary_total)
+ped_hindlimb
+```
+
+```{r}
+write.table(ped_dorsum, file="C:/Users/emmid/Desktop/Spec_Results/ped_dorsum.txt", sep="\t")
+write.table(ped_forelimb, file="C:/Users/emmid/Desktop/Spec_Results/ped_forelimb.txt", sep="\t")
+write.table(ped_hindlimb, file="C:/Users/emmid/Desktop/Spec_Results/ped_hindlimb.txt", sep="\t")
+```
+
