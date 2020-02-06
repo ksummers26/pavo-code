@@ -27,7 +27,6 @@ spec_dirs_IDs <- mutate(frog_IDs, path=spec_dirs)
 spec_dirs_IDs
 ```
 
-
 ```{r}
 #create a function to analyze spec data for each frog
     dorsum_summary_total <- data.frame()
@@ -35,7 +34,7 @@ spec_dirs_IDs
     forelimb_summary_total <- data.frame()
 
 
-for (y in c(1:90)) 
+for (y in c(1:89)) 
 {
   specs <- getspec(where=spec_dirs_IDs[y,2], ext='txt', lim=c(400,1041), subdir=TRUE, subdir.names=TRUE)
   frog_ID <- spec_dirs_IDs[y,1]
@@ -51,6 +50,8 @@ for (y in c(1:90))
   dorsum_summary <- summary(dorsum_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
   dorsum_summary$Individual_ID <- frog_ID
   dorsum_summary_total <- rbind(dorsum_summary_total, dorsum_summary)
+  dorsum_graph <- explorespec(specs_dorsum, ylim=c(0,100))
+  dorsum_agg_graph <- explorespec(dorsum_agg_smooth, ylim=c(0,50))
   
   specs_hindlimb <- na.omit(subset(specs, subset=c("g","h")))
   count_hindlimb <- (ncol(specs_hindlimb)-1)
@@ -206,7 +207,6 @@ write.table(ped_dorsum_retsat, file="C:/Users/emmid/Desktop/Spec_Results/Ped_Fil
 write.table(ped_forelimb_retsat, file="C:/Users/emmid/Desktop/Spec_Results/Ped_Files/ped_forelimb_retsat.txt", sep="\t", row.names = FALSE, na="x", col.names = FALSE, quote=FALSE)
 write.table(ped_hindlimb_retsat, file="C:/Users/emmid/Desktop/Spec_Results/Ped_Files/ped_hindlimb_retsat.txt", sep="\t", row.names = FALSE, na="x", col.names = FALSE, quote=FALSE)
 ```
-
 
 
 
