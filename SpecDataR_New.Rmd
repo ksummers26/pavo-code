@@ -28,7 +28,7 @@ spec_dirs_IDs
 ```
 
 ```{r}
-#create a function to analyze spec data for each frog
+#create a function to analyze and visualize spec data for each frog
     dorsum_summary_total <- data.frame()
     hindlimb_summary_total <- data.frame()
     forelimb_summary_total <- data.frame()
@@ -37,6 +37,7 @@ spec_dirs_IDs
 for (y in c(1:89)) 
 {
   specs <- getspec(where=spec_dirs_IDs[y,2], ext='txt', lim=c(400,1041), subdir=TRUE, subdir.names=TRUE)
+  specs_graph <- explorespec(specs, ylim=c(0,50))
   frog_ID <- spec_dirs_IDs[y,1]
   #subset spec data for body region
   #combine spec data within region and take the average
@@ -47,38 +48,54 @@ for (y in c(1:89))
   count_dorsum <- (ncol(specs_dorsum)-1)
   dorsum_agg <- aggspec(specs_dorsum, by=count_dorsum, FUN="mean")
   dorsum_agg_smooth <- procspec(dorsum_agg, opt="smooth", fixneg="zero", span=0.15)
-  dorsum_summary <- summary(dorsum_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+  dorsum_summary <- summary(dorsum_agg_smooth, subset = c("B2","S1Y", "S1R","H1"), wlmin=450, wlmax=950)
   dorsum_summary$Individual_ID <- frog_ID
   dorsum_summary_total <- rbind(dorsum_summary_total, dorsum_summary)
-  dorsum_graph <- explorespec(specs_dorsum, ylim=c(0,100))
-  dorsum_agg_graph <- explorespec(dorsum_agg_smooth, ylim=c(0,50))
+  if (count_dorsum > 1)
+  {
+    dorsum_agg_plot <- aggplot(specs_dorsum, by=count_dorsum, ylim=c(0,50), xlim=c(450,950))
+  }
+  if (count_dorsum == 1)
+  {
+    dorsum_agg_plot <- plot(specs_dorsum, ylim=c(0,50), xlim=c(450,950))
+  }  
   
   specs_hindlimb <- na.omit(subset(specs, subset=c("g","h")))
   count_hindlimb <- (ncol(specs_hindlimb)-1)
   if (count_hindlimb == 2) 
   {
+    hindlimb_agg_plot <- aggplot(specs_hindlimb, by=count_hindlimb, ylim=c(0,50), xlim=c(450,950))
     specs_hindlimb <- aggspec(specs_hindlimb, by=2, FUN="mean")
   }
   if (count_hindlimb == 2 || count_hindlimb == 1)
   {
     hindlimb_agg_smooth <- procspec(specs_hindlimb, opt="smooth", fixneg="zero", span=0.15)
-    hindlimb_summary <- summary(hindlimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+    hindlimb_summary <- summary(hindlimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"), wlmin=450, wlmax=950)
     hindlimb_summary$Individual_ID <- frog_ID
     hindlimb_summary_total <- rbind(hindlimb_summary_total, hindlimb_summary)
+  }
+  if (count_hindlimb == 1)
+  {
+    hindlimb_plot <- plot(specs_hindlimb, ylim=c(0,50), xlim=c(450,950))
   }
   
   specs_forelimb <- na.omit(subset(specs, subset=c("n", "o")))
   count_forelimb <- (ncol(specs_forelimb)-1)
   if (count_forelimb == 2) 
   {
+    forelimb_agg_plot <- aggplot(specs_forelimb, by=count_forelimb, ylim=c(0,50), xlim=c(450,950))
     specs_forelimb <- aggspec(specs_forelimb, by=2, FUN="mean")
   }
   if (count_forelimb == 2 || count_forelimb == 1)
   {
     forelimb_agg_smooth <- procspec(specs_forelimb, opt="smooth", fixneg="zero", span=0.15)
-    forelimb_summary <- summary(forelimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"))
+    forelimb_summary <- summary(forelimb_agg_smooth, subset = c("B2","S1Y", "S1R","H1"), wlmin=450, wlmax=950)
     forelimb_summary$Individual_ID <- frog_ID
     forelimb_summary_total <- rbind(forelimb_summary_total, forelimb_summary)
+  }
+    if (count_forelimb == 1)
+  {
+    forelimb_plot <- plot(specs_forelimb, ylim=c(0,50), xlim=c(450,950))
   }
 }
 ```
